@@ -1,33 +1,22 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-        <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
-        <title>CanvasLayer</title>
-        <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&amp;ak=XscDSQp6x9b3cII8zU7gSSkmIg3A49nj"></script>
-        <style type="text/css">
-            body,
-            html,
-            #container {
-                width: 100%;
-                height: 100%;
-                overflow: hidden;
-                margin: 0;
-                font-family: "微软雅黑";
-            }
-        </style>
-    </head>
-
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>工时登记软件获取</title>
+</head>
 <body>
-    <div id="container"></div>
-
-    <script type="text/javascript">
-        var map = new BMap.Map("container");
-        var point = new BMap.Point(121.594033, 31.210427);
-        map.centerAndZoom(point, 15); // 中心点
-//         map.enableScrollWheelZoom();  // 缩放
-        var marker = new BMap.Marker(point);        // 创建标注    
-        map.addOverlay(marker);     
-    </script>
+    <h1>工时登记</h1>
+    <ol>
+        <li>
+            <h3>IOS端</h3>
+            <a href="itms-services://?action=download-manifest&url=https://raw.githubusercontent.com/96-chu/aras_cordova_app/master/ipa.plist">点击链接获取</a>
+        </li>
+        <li>
+            <h3>安卓端</h3>
+            <a href="https://github.com/96-chu/aras_cordova_app/blob/master/app-release.apk?raw=true">点击链接获取</a>
+        </li>
+    </ul>
 </body>
 </html>
