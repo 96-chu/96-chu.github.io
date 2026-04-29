@@ -264,7 +264,7 @@ const contactLinks = [
   },
   {
     label: 'Resume',
-    href: '/estella_wang_general_resume.md',
+    href: 'https://github.com/96-chu/96-chu.github.io/blob/master/public/estella_wang_general_resume.md',
     icon: FileText,
     external: true,
   },
