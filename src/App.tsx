@@ -277,9 +277,80 @@ const navItems = [
   { label: 'Contact', href: '#contact' },
 ]
 
+const portfolioImageAssets = [
+  '/images/hero-red-town.jpg',
+  ...balanceSlides.map((slide) => slide.image),
+]
+
 function App() {
   const [activePhrase, setActivePhrase] = useState(0)
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [isPortfolioReady, setIsPortfolioReady] = useState(false)
   const reduceMotion = useReducedMotion()
+
+  useEffect(() => {
+    const assets = Array.from(new Set(portfolioImageAssets))
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const startedAt = window.performance.now()
+    let isMounted = true
+    let loadedCount = 0
+
+    const preloadImage = (src: string) =>
+      new Promise<void>((resolve) => {
+        const image = new Image()
+        let didFinish = false
+
+        const finish = () => {
+          if (didFinish) {
+            return
+          }
+
+          didFinish = true
+          loadedCount += 1
+
+          if (isMounted) {
+            setLoadingProgress(Math.round((loadedCount / assets.length) * 100))
+
+            if (loadedCount === assets.length) {
+              const minimumSplashDuration = prefersReducedMotion ? 0 : 1700
+              const elapsed = window.performance.now() - startedAt
+              const remainingSplashTime = Math.max(0, minimumSplashDuration - elapsed)
+
+              window.setTimeout(() => {
+                if (isMounted) {
+                  setIsPortfolioReady(true)
+                }
+              }, remainingSplashTime)
+            }
+          }
+
+          resolve()
+        }
+
+        image.addEventListener('load', finish, { once: true })
+        image.addEventListener('error', finish, { once: true })
+        image.src = src
+
+        if (image.complete) {
+          finish()
+        }
+      })
+
+    if (assets.length === 0) {
+      setIsPortfolioReady(true)
+      return () => {
+        isMounted = false
+      }
+    }
+
+    assets.forEach((asset) => {
+      void preloadImage(asset)
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   useEffect(() => {
     if (reduceMotion) {
@@ -292,6 +363,25 @@ function App() {
 
     return () => window.clearInterval(intervalId)
   }, [reduceMotion])
+
+  useEffect(() => {
+    if (!isPortfolioReady) {
+      return undefined
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      if (!window.location.hash) {
+        window.scrollTo({ top: 0 })
+        return
+      }
+
+      const targetId = decodeURIComponent(window.location.hash.slice(1).split('?')[0])
+      const target = targetId ? document.getElementById(targetId) : null
+      target?.scrollIntoView()
+    })
+
+    return () => window.cancelAnimationFrame(frameId)
+  }, [isPortfolioReady])
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
@@ -308,8 +398,17 @@ function App() {
     return () => window.removeEventListener('pointermove', handlePointerMove)
   }, [])
 
+  if (!isPortfolioReady) {
+    return <PortfolioLoader progress={loadingProgress} />
+  }
+
   return (
-    <div className="site-shell">
+    <motion.div
+      className="site-shell"
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+    >
       <Header />
       <main>
         <Hero activePhrase={activePhrase} />
@@ -318,7 +417,72 @@ function App() {
         <BalanceSection />
         <ContactSection />
       </main>
-    </div>
+    </motion.div>
+  )
+}
+
+function PortfolioLoader({ progress }: { progress: number }) {
+  const panelCount = 8
+  const activePanelCount = Math.max(1, Math.ceil((progress / 100) * panelCount))
+  const progressLabel = `${Math.round(progress)}%`
+
+  return (
+    <motion.section
+      className="portfolio-loader"
+      role="status"
+      aria-live="polite"
+      aria-label="Portfolio images loading"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 1.04, filter: 'blur(8px)' }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="loader-speed-field" aria-hidden="true" />
+      <motion.div
+        className="loader-cover"
+        initial={{ y: 24, rotate: -1.8 }}
+        animate={{ y: 0, rotate: -0.8 }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <div className="loader-strip" aria-hidden="true" />
+        <div className="loader-title-block">
+          <span>EXPLORE</span>
+          <h1>PORTFOLIO</h1>
+          <p>DATA, DESIGN, AND SOFTWARE</p>
+        </div>
+
+        <div className="loader-stage" aria-hidden="true">
+          <div className="loader-burst loader-burst-one" />
+          <div className="loader-burst loader-burst-two" />
+          <motion.div
+            className="loader-avatar"
+            animate={{ y: [0, -12, 0], rotate: [-2, 2, -2] }}
+            transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <ComicCharacter role="frontend" tone="red" />
+          </motion.div>
+          <span className="loader-sticker loader-sticker-red">LOAD</span>
+          <span className="loader-sticker loader-sticker-yellow">PROJECTS</span>
+        </div>
+
+        <div className="loader-progress">
+          <div className="loader-progress-meta">
+            <span>PROJECT QUEUE</span>
+            <span>{progressLabel}</span>
+          </div>
+          <div className="loader-progress-track" aria-hidden="true">
+            <motion.span
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.28, ease: 'easeOut' }}
+            />
+          </div>
+          <div className="loader-panel-strip" aria-hidden="true">
+            {Array.from({ length: panelCount }, (_, index) => (
+              <span className={index < activePanelCount ? 'is-active' : undefined} key={index} />
+            ))}
+          </div>
+        </div>
+      </motion.div>
+    </motion.section>
   )
 }
 
@@ -421,7 +585,7 @@ function SelectedWork() {
       <SectionHeading
         eyebrow="Selected Work"
         titleId="work-title"
-        title="Selected systems with a comic-poster pulse."
+        title="FEATURED PORTFOLIO PROJECTS."
         copy="A focused set of projects that show how I think across data, product design, software engineering, and real world workflows."
       />
 
